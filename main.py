@@ -9,37 +9,39 @@ from PIL import Image, ImageTk
 
 def enable(childList):
     for child in childList:
-        child.configure(state='normal')
-    frame2_apply_fc.configure(state='disable')
+        child['state'] = 'normal'
+    frame2_apply_fc['state'] = 'disable'
+    frame3_scale_erroded['state'] = 'disable'
+    frame3_scale_dilated['state'] = 'disable'
 
 def OpenExplorer():
     global folder_path
     folder_path = filedialog.askdirectory(initialdir = "/",
 										title = "Select Folder Directory")
-    frame1_input_box.delete('1.0', tk.END)
-    frame1_input_box.insert(tk.END, folder_path)
+    frame1_entry.delete(0, tk.END)
+    frame1_entry.insert(tk.END, folder_path)
 
 def load_sample_path():
     global sample_img_path
-    if frame1_input_box.get('1.0','end-1c') == "":
+    if frame1_entry.get() == "":
         return tk.messagebox.showwarning(title="Folder/Path incorrect", message="Please enter folder path cointaining the image")
-    if not os.path.exists(frame1_input_box.get('1.0','end-1c')):
+    if not os.path.exists(frame1_entry.get()):
         return tk.messagebox.showwarning(title="Folder/Path didn't exist", message="Please enter folder path cointaining the image")
     for i in (i for i in os.listdir(folder_path) if i.endswith(formats)):
         sample_img_path = os.path.join(folder_path, i)
         sample_img_path = sample_img_path.replace("\\", "/")
-        frame1_sample_box.delete('1.0', tk.END)
-        frame1_sample_box.insert(tk.END, sample_img_path)
+        frame1_sample_entry.delete(0, tk.END)
+        frame1_sample_entry.insert(tk.END, sample_img_path)
         return
     return tk.messagebox.showwarning(title="No images found", message="Directory didn't contain any supported images")
 
 def load_sample():
     global id, img, sample_img
-    if not os.path.exists(frame1_sample_box.get('1.0','end-1c')):
+    if not os.path.exists(frame1_sample_entry.get()):
         return tk.messagebox.showwarning(title="Folder/Path didn't exist", message="Please enter folder path cointaining the image")
-    frame1_input_box.delete('1.0', tk.END)
-    frame1_input_box.insert(tk.END, os.path.dirname(frame1_sample_box.get('1.0','end-1c')))
-    sample_img = cv.imread(frame1_sample_box.get('1.0','end-1c'))
+    frame1_entry.delete(0, tk.END)
+    frame1_entry.insert(tk.END, os.path.dirname(frame1_sample_entry.get()))
+    sample_img = cv.imread(frame1_sample_entry.get())
     img = cv.resize(sample_img, canvas, interpolation=cv.INTER_CUBIC)
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     enable(frame2.winfo_children())
@@ -86,10 +88,11 @@ def hi_change():
     global color_hi, color_hi_status
     color_hi = color_pick()
     frame2_hi_color.configure(bg=color_hi[1])
-    color_hi_status = 1
+    if all(color_hi):
+        color_hi_status = 1
     try:
         if color_low_status == 1:
-            frame2_apply_fc.configure(state='normal')
+            frame2_apply_fc['state'] = 'normal'
     except NameError:
         pass
         
@@ -97,10 +100,11 @@ def low_change():
     global color_low, color_low_status
     color_low = color_pick()
     frame2_low_color.configure(bg=color_low[1])
-    color_low_status = 1
+    if all(color_low):
+        color_low_status = 1
     try:
         if color_hi_status == 1:
-            frame2_apply_fc.configure(state='normal')
+            frame2_apply_fc['state'] = 'normal'
     except NameError:
         pass
         
@@ -112,12 +116,13 @@ def err_dil_img(img):
     err_dil_blank.grid(column=1,row=4,padx=(0,28),pady=10,columnspan=3)
 
 def err_dil_updateValue(event):
-    reso = (1,1)
-    n = frame3_err_dil_scale.get()
-    erroded = cv.erode(fc, reso, iterations=n)
-    dilated = cv.dilate(erroded, reso, iterations=n+2)
+    n = frame3_scale_erroded.get()
+    m = frame3_scale_dilated.get()
+    erroded = cv.erode(fc, None, iterations=n)
+    dilated = cv.dilate(erroded, None, iterations=m)
     err_dil_img(dilated)
-    current_img(dilated)
+    result1 = cv.inpaint(img, dilated, 0.1, cv.INPAINT_TELEA)
+    current_img(result1)
     
 def err_dil_apply():
     pass
@@ -165,12 +170,12 @@ frame1_load_img.grid(column=3,row=1,padx=10)
 frame1_load_sample = tk.Button(frame1, text="Load Sample Image", width=15, height=2, command=load_sample)
 frame1_load_sample.grid(column=0,row=3)
 
-'''Text Box'''
-frame1_input_box = tk.Text(frame1, width=35, height=1)
-frame1_input_box.grid(column=1,row=0)
-frame1_sample_box = tk.Text(frame1, width=35, height=1)
-frame1_sample_box.grid(column=1,row=1)
-frame1_sample_box.insert(tk.END, "H:/Document/VS Code/RF_UI/DSC09578.JPG")
+'''Entry'''
+frame1_entry = tk.Entry(frame1, width=35)
+frame1_entry.grid(column=1,row=0)
+frame1_sample_entry = tk.Entry(frame1, width=35)
+frame1_sample_entry.grid(column=1,row=1)
+frame1_sample_entry.insert(tk.END, "H:/Document/VS Code/RF_UI/DSC09578.JPG")
 
 '''Frame1_2'''
 
@@ -204,30 +209,60 @@ frame2_apply_fc = tk.Button(frame2, text='Apply', command=fc_filter)
 frame2_apply_fc.grid(column=2,row=3)
 
 for child in frame2.winfo_children():
-    child.configure(state='disable')
+    child['state'] = 'disable'
 
 '''Frame3'''
+
+def checked():
+    if var1.get():
+        frame3_scale_erroded['state'] = 'normal'
+        frame3_scale_erroded.bind("<ButtonRelease-1>", err_dil_updateValue)
+    if var2.get():
+        frame3_scale_dilated['state'] = 'normal'
+        frame3_scale_dilated.bind("<ButtonRelease-1>", err_dil_updateValue)
+    if not var1.get():
+        frame3_scale_erroded.set(value=0)
+        err_dil_updateValue('<Return>')
+        frame3_scale_erroded['state'] = 'disable'
+        frame3_scale_erroded.unbind("<ButtonRelease-1>")
+    if not var2.get():
+        frame3_scale_dilated.set(value=0)
+        err_dil_updateValue('<Return>')
+        frame3_scale_dilated['state'] = 'disable'    
+        frame3_scale_dilated.unbind("<ButtonRelease-1>") 
+
 frame3 = tk.Frame(right_part)
 frame3.grid(column=0,row=1, sticky='w')
 
+'''Vars'''
+var1 = tk.BooleanVar(value=0)
+var2 = tk.BooleanVar(value=0)
+
 '''Labels'''
-frame3_label_grey = tk.Label(frame3, text="Erroded and Dilated Image", font='bold')
+frame3_label_grey = tk.Label(frame3, text="Erroded/Dilated Image", font='bold')
 frame3_label_grey.grid(column=1,row=5,columnspan=3)
-frame3_label_err_dil = tk.Label(frame3, text="Erroded and Dilated  Intensity", justify='center', wraplength=80)
-frame3_label_err_dil.grid(column=0,row=6)
 err_dil_blank = tk.Label(frame3, bg='black')
 
 '''Scales'''
-frame3_err_dil_scale = tk.Scale(frame3, from_=0, to_=25, length=150, orient="horizontal")
-frame3_err_dil_scale.bind("<ButtonRelease-1>", err_dil_updateValue)
-frame3_err_dil_scale.grid(column=1,row=6,columnspan=3)
+frame3_scale_erroded = tk.Scale(frame3, from_=0, to_=25, length=150, orient="horizontal")
+frame3_scale_erroded.grid(column=1,row=6,columnspan=3)
+frame3_scale_dilated = tk.Scale(frame3, from_=0, to_=25, length=150, orient="horizontal")
+frame3_scale_dilated.grid(column=1,row=7,columnspan=3)
 
 '''Buttons'''
 frame3_apply_fc = tk.Button(frame3, text='Apply', command=err_dil_apply)
-frame3_apply_fc.grid(column=1,row=7,columnspan=3)
+frame3_apply_fc.grid(column=1,row=8,columnspan=3)
 
-for child in frame3.winfo_children():
-    child.configure(state='disable')
+'''Checkboxes'''
+frame3_checkbox_erroded = tk.Checkbutton(frame3, text="Erroded", variable=var1, command=checked)
+frame3_checkbox_erroded.grid(column=0,row=6)
+frame3_checkbox_dilated = tk.Checkbutton(frame3, text="Dilated", variable=var2, command=checked)
+frame3_checkbox_dilated.grid(column=0,row=7)
+
+
+# for child in frame3.winfo_children():
+#     child["state"] = 'disable'
+
 
 '''Etc.'''
 canvas = [150,150]
