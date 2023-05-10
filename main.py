@@ -77,6 +77,7 @@ def fc_img(img):
     fc_blank.image = imTk
     fc_blank.grid(column=1,row=0,pady=10,columnspan=3)
 
+ghhdh
 def fc_filter():
     global fc
     brown_lo=np.array([color_low[0][0],color_low[0][1],color_low[0][2]])
