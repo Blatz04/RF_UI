@@ -7,8 +7,6 @@ from PIL import Image, ImageTk
 from skimage import measure
 from skimage.restoration import inpaint
 
-'''Functions'''
-
 def enable(childList):
     for child in childList:
         child['state'] = 'normal'
@@ -18,21 +16,20 @@ def enable(childList):
     frame3_var2.set(value=0)
     frame4_scale_filarea['state'] = 'disable'
     frame5_scale_inpaint['state'] = 'disable'
-    
-# def inpaint_img(img):
-#     im = Image.fromarray(img)
-#     imTk = ImageTk.PhotoImage(image=im)
-#     inpaint_blank.configure(image=imTk)
-#     inpaint_blank.image = imTk
-#     inpaint_blank.grid(column=0,row=0,pady=0,columnspan=1)
-    
+
+def toggle_theme():
+    if var.get():
+        ref_ui.tk.call("set_theme", "light")
+    else:
+        ref_ui.tk.call("set_theme", "dark")    
+        
 '''UI Settings'''
 
 ref_ui = tk.Tk()
 
 ref_ui.title("Reflective Filter")
 ref_ui.iconbitmap("C_dim.ico")
-ref_ui.geometry("1280x600")
+ref_ui.geometry("1195x600")
 ref_ui.update()
 ui_h = ref_ui.winfo_height()
 #ref_ui.resizable(width=False, height=False)
@@ -60,7 +57,6 @@ border2.pack(side='left',anchor='n')
 right_part = ttk.Frame(ref_ui)
 right_part.pack(side="left", anchor='n', padx=10)
 
-
 '''Frame1'''
 
 def OpenExplorer():
@@ -73,27 +69,28 @@ def OpenExplorer():
 def load_sample_path():
     global sample_img_path
     if frame1_entry.get() == "":
-        return ttk.messagebox.showwarning(title="Folder/Path incorrect", message="Please enter folder path cointaining the image")
+        return tk.messagebox.showinfo(title="Folder/Path incorrect", message="Please enter folder path cointaining the image")
     if not os.path.exists(frame1_entry.get()):
-        return ttk.messagebox.showwarning(title="Folder/Path didn't exist", message="Please enter folder path cointaining the image")
+        return tk.messagebox.showinfo(title="Folder/Path didn't exist", message="Please enter folder path cointaining the image")
     for i in (i for i in os.listdir(folder_path) if i.endswith(formats)):
         sample_img_path = os.path.join(folder_path, i)
         sample_img_path = sample_img_path.replace("\\", "/")
         frame1_sample_entry.delete(0, tk.END)
         frame1_sample_entry.insert(tk.END, sample_img_path)
         return
-    return ttk.messagebox.showwarning(title="No images found", message="Directory didn't contain any supported images")
+    return tk.messagebox.showinfo(title="No images found", message="Directory didn't contain any supported images")
 
 def load_sample():
     global id, img, sample_img
     if not os.path.exists(frame1_sample_entry.get()):
-        return ttk.messagebox.showwarning(title="Folder/Path didn't exist", message="Please enter folder path cointaining the image")
+        return tk.messagebox.showinfo(title="Folder/Path didn't exist", message="Please enter folder path cointaining the image")
     frame1_entry.delete(0, tk.END)
     frame1_entry.insert(tk.END, os.path.dirname(frame1_sample_entry.get()))
     sample_img = cv.imread(frame1_sample_entry.get())
     img = cv.resize(sample_img, canvas, interpolation=cv.INTER_CUBIC)
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     enable(frame2.winfo_children())
+    frame1_check_iterate['state'] = 'normal'
     ori_img(img)
     err_dil_img(img)
     current_img(img)
@@ -117,9 +114,9 @@ frame1.grid(column=0,padx=10)
 
 '''Labels'''
 frame1_label_folder = ttk.Label(frame1, text="Folder Path")
-frame1_label_folder.grid(column=0,row=0,sticky='e',padx=(0,5))
+frame1_label_folder.grid(column=0,row=0,sticky='e',padx=(0,20))
 frame1_label_sample = ttk.Label(frame1, text="Sample Image Path", )
-frame1_label_sample.grid(column=0,row=1,sticky='e',padx=(0,5))
+frame1_label_sample.grid(column=0,row=1,sticky='e',padx=(0,20))
 frame1_label_ori = ttk.Label(frame1, text="Original Image", font='bold')
 frame1_label_ori.grid(column=1,row=4)
 blank = ttk.Label(frame1, background='black')
@@ -142,6 +139,10 @@ frame1_sample_entry = ttk.Entry(frame1, width=25)
 frame1_sample_entry.grid(column=1,row=1)
 frame1_sample_entry.insert(tk.END, "H:/Document/VS Code/RF_UI/DSC09578.JPG")
 
+var = tk.IntVar(value=0)
+theme = ttk.Checkbutton(left_part, text="Theme", variable=var, offvalue=0, onvalue=1, command=toggle_theme, style='Switch.TCheckbutton')
+theme.grid(column=0,sticky='w',pady=75)
+
 '''Frame1_2'''
 
 def current_img(img):
@@ -154,12 +155,28 @@ def current_img(img):
     current_blank.image = imTk
     current_blank.grid(column=1,row=5,pady=10)
 
+def check_iterate():
+    if not frame5_var1.get():
+        return tk.messagebox.showinfo(title="Inpaint Method not Selected", message="Please select Inpaint method")
+    out_path = os.path.dirname(frame1_sample_entry.get()) + '/rf_' + os.path.basename(frame1_entry.get())
+    x = tk.messagebox.askokcancel(title="Start Iterate Process", message=f'''This will start to process every image in the folder, with the outpath "rf_{out_path}" (will create a directory if didn't exist).
+Here are the parameters summary:
+Maximum Color: {color_hi[1]}
+Minimum Color: {color_low[1]}
+Errode Image: {f"Yes, with value of {frame3_var3.get()}" if frame3_var1.get() == 1 else "No"}
+Dilate Image: {f"Yes, with value of {frame3_var4.get()}" if frame3_var2.get() == 1 else "No"}
+Area to Remove: {f"Large, with value {frame4_var2.get()}" if frame4_var1.get() == 1 else f"Small, with value {frame4_var2.get()}" if frame4_var1.get() == 2 else "No"}
+Inpaint Method: {f"NS, with value of {frame5_var2.get()}" if frame5_var1.get() == 1 else f"Telea, with value f {frame5_var2.get()}" if frame5_var1.get() == 2 else f"Biharmonic" if frame5_var1.get() == 3 else "No"}''')
+    print(x)
+    
 '''Labels'''
 frame1_label_grey = ttk.Label(frame1, text="Current Result", font='bold')
 frame1_label_grey.grid(column=1,row=6)
 current_blank = ttk.Label(frame1, background='black')
-frame1_iterate_all = ttk.Button(frame1, text="Iterate All", compound='center')
-frame1_iterate_all.grid(column=0,row=5)
+frame1_check_iterate = ttk.Button(frame1, text="Start Iterate All", compound='center', command=check_iterate)
+frame1_check_iterate.grid(column=0,row=5)
+
+frame1_check_iterate['state'] = 'disable'
 
 '''Frame2'''
 
@@ -172,9 +189,9 @@ def cf_image(img):
 
 def cf_filter():
     global cf
-    brown_lo=np.array([color_low[0][0],color_low[0][1],color_low[0][2]])
-    brown_hi=np.array([color_hi[0][0],color_hi[0][1],color_hi[0][2]])
-    cf=cv.inRange(img,brown_lo,brown_hi)
+    cf_lo=np.array([color_low[0][0],color_low[0][1],color_low[0][2]])
+    cf_hi=np.array([color_hi[0][0],color_hi[0][1],color_hi[0][2]])
+    cf=cv.inRange(img,cf_lo,cf_hi)
     current_img(cf)
     cf_image(cf)
     enable(frame3.winfo_children())
@@ -350,7 +367,6 @@ def filarea_updateValue(event):
             labelMask = np.zeros(mask.shape, dtype="uint8")
             labelMask[labels == label] = 255
             numPixels = cv.countNonZero(labelMask)
-            print(frame4_var2.get())
             if numPixels > frame4_var2.get():
                 mask = cv.add(mask, labelMask)
         filarea = mask
@@ -402,7 +418,7 @@ frame4_scale_filarea['state'] = 'disable'
 
 '''Radiobuttons'''
 frame4_radio_large = ttk.Radiobutton(frame4, text="Remove Large", variable=frame4_var1, value=1, command=frame4_checked)
-frame4_radio_large.grid(column=0,row=2, sticky='w')
+frame4_radio_large.grid(column=0,row=2)
 frame4_radio_small = ttk.Radiobutton(frame4, text="Remove Small", variable=frame4_var1, value=2, command=frame4_checked)
 frame4_radio_small.grid(column=2,row=2, columnspan=2, sticky='e')
 
@@ -419,13 +435,13 @@ def inpaint_img(img):
     imTk = ImageTk.PhotoImage(image=im)
     inpaint_blank.configure(image=imTk)
     inpaint_blank.image = imTk
-    inpaint_blank.grid(column=0,row=0,columnspan=3)
+    inpaint_blank.grid(column=0,row=0,columnspan=3,padx=(0,10))
         
 
 def inpaint_updateValue(event, ori=None):
     if frame5_var1.get() == 0:
-        #inpaint_img(ori)
-        #current_img(ori)
+        inpaint_img(ori)
+        current_img(ori)
         pass
     if frame5_var1.get() == 1:
         inpainted = cv.inpaint(img, filarea, frame5_var2.get(), cv.INPAINT_NS)
@@ -478,7 +494,7 @@ inpaint_blank = ttk.Label(frame5, background='black')
 
 '''Entry'''
 frame5_entry = ttk.Entry(frame5, width=5, justify="center", textvariable=frame5_var2)
-frame5_entry.grid(column=2,row=3, sticky='e')
+frame5_entry.grid(column=2,row=3,sticky='e',padx=(0,11))
 
 def frame5_var2_updateValue(event):
     value = float(event)
@@ -487,7 +503,7 @@ def frame5_var2_updateValue(event):
 
 '''Scales'''
 frame5_scale_inpaint = ttk.Scale(frame5, from_=0, to_=100, variable=frame5_var2, command=frame5_var2_updateValue, length=175, orient="horizontal")
-frame5_scale_inpaint.grid(column=0,row=3,columnspan=2)
+frame5_scale_inpaint.grid(column=0,row=3,columnspan=2,padx=5)
 frame5_scale_inpaint['state'] = 'disable'
 
 '''Radiobuttons'''
