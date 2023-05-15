@@ -29,7 +29,7 @@ def toggle_theme():
 def disableChildren(parent):
     for child in parent.winfo_children():
         wtype = child.winfo_class()
-        if wtype not in ('Frame','Labelframe','TFrame','TLabelframe'):
+        if wtype not in ('Frame','Labelframe','TFrame','TLabelframe', 'TToplevel'):
             child.configure(state='disable')
         else:
             disableChildren(child)
@@ -76,6 +76,15 @@ border2.pack(side='left',anchor='n')
 right_part = ttk.Frame(ref_ui)
 right_part.pack(side="left", anchor='n', padx=10)
 
+curr_img_n = 0
+curr_img = tk.IntVar(value=curr_img_n)
+popup = tk.Toplevel(ref_ui)
+popup.title("~")
+popup.iconbitmap("C_dim.ico")
+progress_bar = ttk.Progressbar(popup, variable=curr_img)
+progress_bar.grid(row=1, column=0)
+popup.withdraw()
+
 '''Frame1'''
 
 def OpenExplorer():
@@ -101,11 +110,14 @@ def load_sample_path():
     return tk.messagebox.showinfo(title="No images found", message="Directory didn't contain any supported images")
 
 def load_sample():
-    global id, img, sample_img
+    global id, img, sample_img, n_img
     if not os.path.exists(frame1_sample_entry.get()):
         return tk.messagebox.showinfo(title="Folder/Path didn't exist", message="Please enter folder path cointaining the image")
     frame1_entry.delete(0, tk.END)
     frame1_entry.insert(tk.END, os.path.dirname(frame1_sample_entry.get()))
+    n_img = 0
+    for i in (i for i in os.listdir(frame1_entry.get()) if i.endswith(formats)):
+        n_img +=1
     sample_img = cv.imread(frame1_sample_entry.get())
     img = cv.resize(sample_img, canvas, interpolation=cv.INTER_CUBIC)
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
@@ -121,6 +133,7 @@ def load_sample():
     frame1_entry_size_w.delete(0, tk.END)
     frame1_entry_size_h.insert(tk.END, f"{sample_img.shape[0]}")
     frame1_entry_size_w.insert(tk.END, f"{sample_img.shape[1]}")
+    frame1_var1.set(value=f'Images: {n_img}')
 
 def color_pick():
     color = colorchooser.askcolor(title="Pick Color")
@@ -204,11 +217,17 @@ Dilate Image: {f"Yes, with value of {dil_val}" if dil_ == 1 else "No"}
 Area to Remove: {f"Large, with value {rem_val}" if rem_ == 1 else f"Small, with value {rem_val}" if rem_ == 2 else "No"}
 Inpaint Method: {f"NS, with value of {inp_val}" if inp_ == 1 else f"Telea, with value f {inp_val}" if inp_ == 2 else f"Biharmonic" if inp_ == 3 else "No"}''')
     if x:
+        progress_bar['maximum'] = n_img
+        popup.deiconify()
+        ref_ui.eval(f'tk::PlaceWindow {str(popup)} center')
+        ref_ui.withdraw()
         iterate()
+        ref_ui.deiconify()
+        popup.withdraw()
 
 def iterate():
     for img_name in (img_name for img_name in os.listdir(frame1_entry.get()) if img_name.endswith(formats)):
-        global iterating, temp_img_name, img
+        global iterating, temp_img_name, img, curr_img_n
         temp_img_name = img_name
         iterating = 1
         i_path = (frame1_entry.get() + '\\' + img_name)
@@ -218,23 +237,45 @@ def iterate():
         #i_img = cv.resize(i_img, canvas, interpolation=cv.INTER_CUBIC)
         i_img = cv.resize(i_img, (int(frame1_entry_size_w.get()),int(frame1_entry_size_h.get())), interpolation=cv.INTER_CUBIC)
         img = cv.cvtColor(i_img, cv.COLOR_BGR2RGB)
-        disableChildren(ref_ui)
+        #disableChildren(ref_ui)
+        curr_img_n +=1
+        curr_img.set(value=curr_img_n)
+        popup.update()
         cf_filter()
     iterating = 0
     load_sample()
-    enableChildren(ref_ui)
+    for child in frame2.winfo_children():
+        child["state"] = 'disable'
+    for child in frame3.winfo_children():
+        child["state"] = 'disable'
+    for child in frame4.winfo_children():
+        child["state"] = 'disable'
+    for child in frame5.winfo_children():
+        child["state"] = 'disable'
+    curr_img_n = 0
+    curr_img.set(value=curr_img_n)
+    #enableChildren(ref_ui)
 
 def iterate_2(i_img):
         final = (f"{out_path}\\rf_{temp_img_name}")
+        #frame1_var1.set(value=f'Processed Images: {curr_img}/{n_img}')
+        #print(f'Processed Images: {curr_img}/{n_img}')
         print(final)
         #print(out_path)
         if not os.path.exists(out_path):
             os.mkdir(out_path)
-        i_img = cv.cvtColor(i_img.astype('float32'), cv.COLOR_RGB2BGR)
-        cv.imwrite(final, i_img*255)
+        if frame5_var1.get() == 3:
+            i_img = cv.cvtColor(i_img.astype('float32'), cv.COLOR_RGB2BGR)
+            cv.imwrite(final, i_img*255)
+        else:
+            i_img = cv.cvtColor(i_img, cv.COLOR_RGB2BGR)
+            cv.imwrite(final, i_img)
         #cv.imshow('a', i_img)
         #cv.waitKey(0)
-    
+
+'''Variables'''
+frame1_var1 = tk.StringVar(value='Images: ~')
+
 '''Labels'''
 frame1_label_grey = ttk.Label(frame1, text="Current Result", font='bold')
 frame1_label_grey.grid(column=1,row=6)
@@ -245,6 +286,8 @@ frame1_label_size_h = ttk.Label(frame1, text="H", font='bold')
 frame1_label_size_h.grid(column=1,row=7,sticky='w')
 frame1_label_size_w = ttk.Label(frame1, text="W", font='bold')
 frame1_label_size_w.grid(column=1,row=8,sticky='w')
+frame1_label_images = ttk.Label(frame1, textvariable=frame1_var1, font='bold')
+frame1_label_images.grid(column=0,row=9)
 
 'Buttons'
 frame1_check_iterate = ttk.Button(frame1, text="Start Iterate All", compound='center', command=check_iterate)
@@ -627,6 +670,6 @@ current_img(sample_img)
 cf_image(sample_img)
 filarea_img(sample_img)
 inpaint_img(sample_img)
-
+ref_ui.eval('tk::PlaceWindow . center')
 
 ref_ui.mainloop()
