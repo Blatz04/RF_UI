@@ -48,7 +48,7 @@ ref_ui = tk.Tk()
 
 ref_ui.title("Reflective Filter")
 ref_ui.iconbitmap("C_dim.ico")
-ref_ui.geometry("1195x600")
+ref_ui.geometry("1195x640")
 ref_ui.update()
 ui_h = ref_ui.winfo_height()
 ref_ui.resizable(width=False, height=False)
@@ -80,9 +80,10 @@ curr_img_n = 0
 curr_img = tk.IntVar(value=curr_img_n)
 popup = tk.Toplevel(ref_ui)
 popup.title("~")
+popup.geometry("150x20")
 popup.iconbitmap("C_dim.ico")
 progress_bar = ttk.Progressbar(popup, variable=curr_img)
-progress_bar.grid(row=1, column=0)
+progress_bar.pack(pady=5)
 popup.withdraw()
 
 '''Frame1'''
@@ -123,6 +124,9 @@ def load_sample():
     img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
     enable(frame2.winfo_children())
     frame1_check_iterate['state'] = 'normal'
+    frame1_entry_size_h['state'] = 'normal'
+    frame1_entry_size_w['state'] = 'normal'
+    current_blank['state'] = 'normal'
     ori_img(img)
     err_dil_img(img)
     current_img(img)
@@ -174,12 +178,7 @@ frame1_entry = ttk.Entry(frame1, width=25)
 frame1_entry.grid(column=1,row=0,pady=10)
 frame1_sample_entry = ttk.Entry(frame1, width=25)
 frame1_sample_entry.grid(column=1,row=1)
-frame1_sample_entry.insert(tk.END, "H:\Document\VS Code\RF_UI\DSC09577.JPG")
-
-'''Checkbuttons'''
-var = tk.IntVar(value=0)
-theme = ttk.Checkbutton(left_part, text="Theme", variable=var, offvalue=0, onvalue=1, command=toggle_theme, style='Switch.TCheckbutton')
-theme.grid(column=0,sticky='w',pady=75)
+#frame1_sample_entry.insert(tk.END, "H:\Document\VS Code\RF_UI\DSC09577.JPG")
 
 '''Frame1_2'''
 
@@ -197,7 +196,7 @@ def check_iterate():
     global out_path
     if not frame5_var1.get():
         return tk.messagebox.showinfo(title="Inpaint Method not Selected", message="Please select Inpaint method")
-    out_path = os.path.dirname(frame1_sample_entry.get()) + '\\rf_' + os.path.basename(frame1_entry.get())
+    out_path = os.path.dirname(frame1_sample_entry.get()) + '/rf_' + os.path.basename(frame1_entry.get())
     max_color = color_hi[1]
     min_color = color_low[1]
     err_ = frame3_var1.get()
@@ -260,7 +259,7 @@ def iterate_2(i_img):
         final = (f"{out_path}\\rf_{temp_img_name}")
         #frame1_var1.set(value=f'Processed Images: {curr_img}/{n_img}')
         #print(f'Processed Images: {curr_img}/{n_img}')
-        print(final)
+        #print(final)
         #print(out_path)
         if not os.path.exists(out_path):
             os.mkdir(out_path)
@@ -297,7 +296,15 @@ frame1_entry_size_h.grid(column=0,row=7)
 frame1_entry_size_w = ttk.Entry(frame1, width=10)
 frame1_entry_size_w.grid(column=0,row=8)
 
+'''Checkbuttons'''
+var = tk.IntVar(value=0)
+theme = ttk.Checkbutton(frame1, text="Theme", variable=var, offvalue=0, onvalue=1, command=toggle_theme, style='Switch.TCheckbutton')
+theme.grid(column=0,row=10,pady=20,sticky='w')
+
+current_blank['state'] = 'disable'
 frame1_check_iterate['state'] = 'disable'
+frame1_entry_size_h['state'] = 'disable'
+frame1_entry_size_w['state'] = 'disable'
 
 '''Frame2'''
 
