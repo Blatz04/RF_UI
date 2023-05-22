@@ -79,12 +79,19 @@ right_part.pack(side="left", anchor='n', padx=10)
 
 curr_img_n = 0
 curr_img = tk.IntVar(value=curr_img_n)
+cancel_var = tk.BooleanVar(value=0)
+
+def cancel_updateValue():
+    cancel_var.set(value=1)
+
 popup = tk.Toplevel(ref_ui)
 popup.title("~")
-popup.geometry("150x20")
+popup.geometry("150x60")
 popup.iconbitmap("C_dim.ico")
 progress_bar = ttk.Progressbar(popup, variable=curr_img)
 progress_bar.pack(pady=5)
+cancel_button = ttk.Button(popup, text="Stop", command=cancel_updateValue)
+cancel_button.pack()
 popup.withdraw()
 
 '''Frame1'''
@@ -217,6 +224,7 @@ Dilate Image: {f"Yes, with value of {dil_val}" if dil_ == 1 else "No"}
 Area to Remove: {f"Large, with value {rem_val}" if rem_ == 1 else f"Small, with value of{rem_val}" if rem_ == 2 else "No"}
 Inpaint Method: {f"NS, with value of {inp_val}" if inp_ == 1 else f"Telea, with value off {inp_val}" if inp_ == 2 else f"Biharmonic" if inp_ == 3 else "No"}''')
     if x:
+        cancel_var.set(value=0)
         progress_bar['maximum'] = n_img
         popup.deiconify()
         ref_ui.eval(f'tk::PlaceWindow {str(popup)} center')
@@ -228,6 +236,9 @@ Inpaint Method: {f"NS, with value of {inp_val}" if inp_ == 1 else f"Telea, with 
 def iterate():
     gc.collect()
     for img_name in (img_name for img_name in os.listdir(frame1_entry.get()) if img_name.endswith(formats)):
+        if cancel_var.get() == 1:
+            cancel_var.set(value=0)
+            return
         global iterating, temp_img_name, img, curr_img_n
         temp_img_name = img_name
         iterating = 1
@@ -322,6 +333,7 @@ def cf_image(img):
 
 def cf_filter():
     global cf
+    print('a')
     cf_lo=np.array([color_low[0][0],color_low[0][1],color_low[0][2]])
     cf_hi=np.array([color_hi[0][0],color_hi[0][1],color_hi[0][2]])
     cf=cv.inRange(img,cf_lo,cf_hi)
