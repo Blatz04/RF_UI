@@ -2,6 +2,7 @@ import cv2 as cv
 import tkinter as tk
 import os
 import numpy as np
+import gc
 from tkinter import filedialog, colorchooser, ttk
 from PIL import Image, ImageTk
 from skimage import measure
@@ -161,9 +162,9 @@ frame1_label_sample.grid(column=0,row=1,sticky='e',padx=(0,20))
 frame1_label_ori = ttk.Label(frame1, text="Original Image", font='bold')
 frame1_label_ori.grid(column=1,row=4)
 blank = ttk.Label(frame1, background='black')
-#frame1_label_info = ttk.Label(frame1, text=
-#'You can directly put the Sample Image Path.The folder of the image will be assumed as the main folder containing the rest of the image', justify="left", wraplength=130)
-#frame1_label_info.grid(column=2,row=3,columnspan=2)
+frame1_label_tip = ttk.Label(frame1, text=
+'You can directly put the Sample Image Path. The folder of the image will be assumed as the main folder containing the rest of the image', justify="left", wraplength=130)
+frame1_label_tip.grid(column=2,row=3,columnspan=2)
 
 '''Buttons'''
 frame1_pick_folder = ttk.Button(frame1, text="Pick Folder", width=15, command=OpenExplorer)
@@ -178,7 +179,7 @@ frame1_entry = ttk.Entry(frame1, width=25)
 frame1_entry.grid(column=1,row=0,pady=10)
 frame1_sample_entry = ttk.Entry(frame1, width=25)
 frame1_sample_entry.grid(column=1,row=1)
-#frame1_sample_entry.insert(tk.END, "H:\Document\VS Code\RF_UI\DSC09577.JPG")
+frame1_sample_entry.insert(tk.END, r"H:\Downloads\Compressed\mugS130\New folder\mugS130_0_1.jpg")
 
 '''Frame1_2'''
 
@@ -197,8 +198,8 @@ def check_iterate():
     if not frame5_var1.get():
         return tk.messagebox.showinfo(title="Inpaint Method not Selected", message="Please select Inpaint method")
     out_path = os.path.dirname(frame1_sample_entry.get()) + '/rf_' + os.path.basename(frame1_entry.get())
-    max_color = color_hi[1]
-    min_color = color_low[1]
+    max_color = color_hi
+    min_color = color_low
     err_ = frame3_var1.get()
     dil_ = frame3_var2.get()
     err_val = frame3_var3.get()
@@ -209,12 +210,12 @@ def check_iterate():
     inp_val = frame5_var2.get()
     x = tk.messagebox.askokcancel(title="Start Iterate Process", message=f'''This will start to process every image in the folder, with the output path "{out_path}" (will create a directory if didn't exist).
 Here are the parameters summary:
-Maximum Color: {max_color}
-Minimum Color: {min_color}
+Maximum Color: {max_color[1]}
+Minimum Color: {min_color[1]}
 Errode Image: {f"Yes, with value of {err_val}" if err_ == 1 else "No"}
 Dilate Image: {f"Yes, with value of {dil_val}" if dil_ == 1 else "No"}
-Area to Remove: {f"Large, with value {rem_val}" if rem_ == 1 else f"Small, with value {rem_val}" if rem_ == 2 else "No"}
-Inpaint Method: {f"NS, with value of {inp_val}" if inp_ == 1 else f"Telea, with value f {inp_val}" if inp_ == 2 else f"Biharmonic" if inp_ == 3 else "No"}''')
+Area to Remove: {f"Large, with value {rem_val}" if rem_ == 1 else f"Small, with value of{rem_val}" if rem_ == 2 else "No"}
+Inpaint Method: {f"NS, with value of {inp_val}" if inp_ == 1 else f"Telea, with value off {inp_val}" if inp_ == 2 else f"Biharmonic" if inp_ == 3 else "No"}''')
     if x:
         progress_bar['maximum'] = n_img
         popup.deiconify()
@@ -225,17 +226,18 @@ Inpaint Method: {f"NS, with value of {inp_val}" if inp_ == 1 else f"Telea, with 
         popup.withdraw()
 
 def iterate():
+    gc.collect()
     for img_name in (img_name for img_name in os.listdir(frame1_entry.get()) if img_name.endswith(formats)):
         global iterating, temp_img_name, img, curr_img_n
         temp_img_name = img_name
         iterating = 1
         i_path = (frame1_entry.get() + '\\' + img_name)
         #print(i_path)
-        i_img = cv.imread(f"{i_path}")
+        img = cv.imread(f"{i_path}")
         #print(int(frame1_entry_size_w.get()), int(frame1_entry_size_w.get()))
         #i_img = cv.resize(i_img, canvas, interpolation=cv.INTER_CUBIC)
-        i_img = cv.resize(i_img, (int(frame1_entry_size_w.get()),int(frame1_entry_size_h.get())), interpolation=cv.INTER_CUBIC)
-        img = cv.cvtColor(i_img, cv.COLOR_BGR2RGB)
+        img = cv.resize(img, (int(frame1_entry_size_w.get()),int(frame1_entry_size_h.get())), interpolation=cv.INTER_CUBIC)
+        img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         #disableChildren(ref_ui)
         curr_img_n +=1
         curr_img.set(value=curr_img_n)
@@ -279,14 +281,17 @@ frame1_var1 = tk.StringVar(value='Images: ~')
 frame1_label_grey = ttk.Label(frame1, text="Current Result", font='bold')
 frame1_label_grey.grid(column=1,row=6)
 current_blank = ttk.Label(frame1, background='black')
-frame1_label_size = ttk.Label(frame1, text="Output Size", font='bold')
-frame1_label_size.grid(column=0,row=6)
+frame1_label_size = ttk.Label(frame1, text="Output Dimensions", font='bold')
+frame1_label_size.grid(column=0,row=6,pady=10)
 frame1_label_size_h = ttk.Label(frame1, text="H", font='bold')
 frame1_label_size_h.grid(column=1,row=7,sticky='w')
 frame1_label_size_w = ttk.Label(frame1, text="W", font='bold')
 frame1_label_size_w.grid(column=1,row=8,sticky='w')
 frame1_label_images = ttk.Label(frame1, textvariable=frame1_var1, font='bold')
 frame1_label_images.grid(column=0,row=9)
+frame1_label_info = ttk.Label(frame1, text=
+'The larger the output dimensions, the slower the proccess would take. It is adviced for you to already have the resized version of your image rather than resizing it here.', justify="left", wraplength=130)
+frame1_label_info.grid(column=3,row=5,columnspan=5)
 
 'Buttons'
 frame1_check_iterate = ttk.Button(frame1, text="Start Iterate All", compound='center', command=check_iterate)
@@ -299,7 +304,7 @@ frame1_entry_size_w.grid(column=0,row=8)
 '''Checkbuttons'''
 var = tk.IntVar(value=0)
 theme = ttk.Checkbutton(frame1, text="Theme", variable=var, offvalue=0, onvalue=1, command=toggle_theme, style='Switch.TCheckbutton')
-theme.grid(column=0,row=10,pady=20,sticky='w')
+theme.grid(column=0,row=10,pady=10,sticky='w')
 
 current_blank['state'] = 'disable'
 frame1_check_iterate['state'] = 'disable'
@@ -323,16 +328,19 @@ def cf_filter():
     current_img(cf)
     cf_image(cf)
     enable(frame3.winfo_children())
-    frame3_var1.set(value=0)
-    frame3_var2.set(value=0)
     enable(frame4.winfo_children())
-    frame4_var1.set(value=0)
     enable(frame5.winfo_children())
     try:
         if not iterating:
             frame5_var1.set(value=0)
+            frame3_var1.set(value=0)
+            frame3_var2.set(value=0)
+            frame4_var1.set(value=0)
     except:
         frame5_var1.set(value=0)
+        frame3_var1.set(value=0)
+        frame3_var2.set(value=0)
+        frame4_var1.set(value=0)
     err_dil_updateValue('<Return>')
         
 def hi_change():
@@ -374,9 +382,9 @@ frame2_hi_color = tk.Label(frame2, background=None, width=5, height=2)
 frame2_hi_color.grid(column=1,row=3)
 frame2_low_color = tk.Label(frame2, background=None, width=5, height=2)
 frame2_low_color.grid(column=3,row=3)
-#frame2_cf_info = ttk.Label(frame2, text=
-#'Pick range of color to remove correspond to the reflection. White is Higest and Dark is Lowest. Color is treated as RGB color scheme, so carefull to not flip the maximum and minimum picked color', justify="left", wraplength=380)
-#frame2_cf_info.grid(column=0,row=0,columnspan=5)
+frame2_cf_info = ttk.Label(frame2, text=
+'Pick a range of color to remove corresponds to the reflections. Color is treated as RGB color scheme (White is Max and Dark is Low), so carefull to not flip the maximum and minimum picked color', justify="left", wraplength=380)
+frame2_cf_info.grid(column=0,row=0,columnspan=5)
 
 '''Buttons'''
 frame2_hi_pick = ttk.Button(frame2, text='Pick Maximum\n      Color', command=hi_change)
@@ -583,13 +591,12 @@ def inpaint_updateValue(event, ori=None):
     if frame5_var1.get() == 0:
         inpaint_img(ori)
         current_img(ori)
-        pass
     if frame5_var1.get() == 1:
         inpainted = cv.inpaint(img, filarea, frame5_var2.get(), cv.INPAINT_NS)
     if frame5_var1.get() == 2:
         inpainted = cv.inpaint(img, filarea, frame5_var2.get(), cv.INPAINT_TELEA)
     if frame5_var1.get() == 3:
-        inpainted = inpaint.inpaint_biharmonic(img, filarea, channel_axis=-1)
+        inpainted = inpaint.inpaint_biharmonic(img, filarea, split_into_regions=True, channel_axis=-1)
     try:
         inpaint_img(inpainted)
         current_img(inpainted)
@@ -642,6 +649,11 @@ frame5_var3 = 0
 frame5_label_grey = ttk.Label(frame5, text="Inpaint", font='bold')
 frame5_label_grey.grid(column=0,row=1,columnspan=3)
 inpaint_blank = ttk.Label(frame5, background='black')
+frame5_label_info = ttk.Label(frame5, text=
+'''NOTE!
+Biharmonic consumes A LOT of memory and slow, a single image more than 700x700 pixels may consume more than 4GB of RAM!
+As for others, larger value, larger time to process.''', wraplength=200, justify='center')
+frame5_label_info.grid(column=0,row=4,columnspan=3)
 
 def frame5_callback(event):
     inpaint_updateValue(None)
