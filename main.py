@@ -38,7 +38,6 @@ def disableChildren(parent):
 def enableChildren(parent):
     for child in parent.winfo_children():
         wtype = child.winfo_class()
-        #print (wtype)
         if wtype not in ('Frame','Labelframe','TFrame','TLabelframe'):
             child.configure(state='normal')
         else:
@@ -186,7 +185,7 @@ frame1_entry = ttk.Entry(frame1, width=25)
 frame1_entry.grid(column=1,row=0,pady=10)
 frame1_sample_entry = ttk.Entry(frame1, width=25)
 frame1_sample_entry.grid(column=1,row=1)
-frame1_sample_entry.insert(tk.END, r"H:\Downloads\Compressed\mugS130\New folder\mugS130_0_1.jpg")
+#frame1_sample_entry.insert(tk.END, r"H:\Downloads\Compressed\mugS130\New folder\mugS130_0_1.jpg")
 
 '''Frame1_2'''
 
@@ -238,18 +237,14 @@ def iterate():
     for img_name in (img_name for img_name in os.listdir(frame1_entry.get()) if img_name.endswith(formats)):
         if cancel_var.get() == 1:
             cancel_var.set(value=0)
-            return
+            break
         global iterating, temp_img_name, img, curr_img_n
         temp_img_name = img_name
         iterating = 1
         i_path = (frame1_entry.get() + '\\' + img_name)
-        #print(i_path)
         img = cv.imread(f"{i_path}")
-        #print(int(frame1_entry_size_w.get()), int(frame1_entry_size_w.get()))
-        #i_img = cv.resize(i_img, canvas, interpolation=cv.INTER_CUBIC)
         img = cv.resize(img, (int(frame1_entry_size_w.get()),int(frame1_entry_size_h.get())), interpolation=cv.INTER_CUBIC)
         img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
-        #disableChildren(ref_ui)
         curr_img_n +=1
         curr_img.set(value=curr_img_n)
         popup.update()
@@ -266,14 +261,9 @@ def iterate():
         child["state"] = 'disable'
     curr_img_n = 0
     curr_img.set(value=curr_img_n)
-    #enableChildren(ref_ui)
 
 def iterate_2(i_img):
         final = (f"{out_path}\\rf_{temp_img_name}")
-        #frame1_var1.set(value=f'Processed Images: {curr_img}/{n_img}')
-        #print(f'Processed Images: {curr_img}/{n_img}')
-        #print(final)
-        #print(out_path)
         if not os.path.exists(out_path):
             os.mkdir(out_path)
         if frame5_var1.get() == 3:
@@ -282,8 +272,6 @@ def iterate_2(i_img):
         else:
             i_img = cv.cvtColor(i_img, cv.COLOR_RGB2BGR)
             cv.imwrite(final, i_img)
-        #cv.imshow('a', i_img)
-        #cv.waitKey(0)
 
 '''Variables'''
 frame1_var1 = tk.StringVar(value='Images: ~')
@@ -333,7 +321,6 @@ def cf_image(img):
 
 def cf_filter():
     global cf
-    print('a')
     cf_lo=np.array([color_low[0][0],color_low[0][1],color_low[0][2]])
     cf_hi=np.array([color_hi[0][0],color_hi[0][1],color_hi[0][2]])
     cf=cv.inRange(img,cf_lo,cf_hi)
@@ -614,13 +601,10 @@ def inpaint_updateValue(event, ori=None):
         current_img(inpainted)
         try:
             if iterating:
-                #print('try')
                 iterate_2(inpainted)
         except NameError:
-            #print('except')
             pass
     except UnboundLocalError:
-        #print('error')
         pass
     
 
