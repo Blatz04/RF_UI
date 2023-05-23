@@ -185,7 +185,6 @@ frame1_entry = ttk.Entry(frame1, width=25)
 frame1_entry.grid(column=1,row=0,pady=10)
 frame1_sample_entry = ttk.Entry(frame1, width=25)
 frame1_sample_entry.grid(column=1,row=1)
-#frame1_sample_entry.insert(tk.END, r"H:\Downloads\Compressed\mugS130\New folder\mugS130_0_1.jpg")
 
 '''Frame1_2'''
 
@@ -365,7 +364,7 @@ def low_change():
     else:
         color_low_status = 0
     try:
-        if color_low_status == 1 and color_hi_status == 1:
+        if color_hi_status == 1 and color_low_status == 1:
             cf_filter()
     except NameError:
         pass
@@ -443,7 +442,7 @@ frame3_var3 = tk.IntVar()
 frame3_var4 = tk.IntVar()
 
 '''Labels'''
-frame3_label_grey = ttk.Label(frame3, text="Erroded/Dilated Image", font='bold')
+frame3_label_grey = ttk.Label(frame3, text="Erroded/Dilated Mask", font='bold')
 frame3_label_grey.grid(column=1,row=5)
 err_dil_blank = ttk.Label(frame3, background='black')
 
@@ -547,7 +546,7 @@ frame4_var2 = tk.IntVar(value=0)
 frame4_var3 = 0
 
 '''Labels'''
-frame4_label_grey = ttk.Label(frame4, text="Filter Area", font='bold')
+frame4_label_grey = ttk.Label(frame4, text="Filter Mask", font='bold')
 frame4_label_grey.grid(column=0,row=1,columnspan=4,pady=10)
 filarea_blank = ttk.Label(frame4, background='black')
 
