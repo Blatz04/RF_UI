@@ -126,9 +126,12 @@ def load_sample():
     n_img = 0
     for i in (i for i in os.listdir(frame1_entry.get()) if i.endswith(formats)):
         n_img +=1
-    sample_img = cv.imread(frame1_sample_entry.get())
-    img = cv.resize(sample_img, canvas, interpolation=cv.INTER_CUBIC)
-    img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+    # sample_img = cv.imread(frame1_sample_entry.get())
+    sample_img = Image.open(frame1_sample_entry.get())
+    # img = cv.resize(sample_img, canvas, interpolation=cv.INTER_AREA)
+    img = sample_img.resize(canvas, resample=Image.Resampling.NEAREST)
+    sample_img = np.array(sample_img)
+    img = np.array(img)
     enable(frame2.winfo_children())
     frame1_check_iterate['state'] = 'normal'
     frame1_entry_size_h['state'] = 'normal'
@@ -152,9 +155,9 @@ def color_pick():
     
 def ori_img(img):
     im = Image.fromarray(img)
-    imTk = ImageTk.PhotoImage(image=im)
-    blank.configure(image=imTk)
-    blank.image = imTk
+    im = ImageTk.PhotoImage(image=im)
+    blank.configure(image=im)
+    blank.image = im
     blank.grid(column=1,row=3,pady=10)
 
 frame1 = ttk.Frame(left_part)
@@ -185,6 +188,7 @@ frame1_entry = ttk.Entry(frame1, width=25)
 frame1_entry.grid(column=1,row=0,pady=10)
 frame1_sample_entry = ttk.Entry(frame1, width=25)
 frame1_sample_entry.grid(column=1,row=1)
+frame1_sample_entry.insert(tk.END, "H:/Document/VS Code/RF_UI/DSC09581.JPG")
 
 '''Frame1_2'''
 
@@ -193,9 +197,9 @@ def current_img(img):
         im = Image.fromarray(img)
     except:
         im = Image.fromarray((img * 255).astype(np.uint8))
-    imTk = ImageTk.PhotoImage(image=im)
-    current_blank.configure(image=imTk)
-    current_blank.image = imTk
+    im = ImageTk.PhotoImage(image=im)
+    current_blank.configure(image=im)
+    current_blank.image = im
     current_blank.grid(column=1,row=5,pady=10)
 
 def check_iterate():
@@ -237,19 +241,23 @@ def iterate():
         if cancel_var.get() == 1:
             cancel_var.set(value=0)
             break
-        global iterating, temp_img_name, img, curr_img_n
+        global iterating, temp_img_name, img, curr_img_n, img_h, img_w
         temp_img_name = img_name
         iterating = 1
         i_path = (frame1_entry.get() + '\\' + img_name)
-        img = cv.imread(f"{i_path}")
-        img = cv.resize(img, (int(frame1_entry_size_w.get()),int(frame1_entry_size_h.get())), interpolation=cv.INTER_CUBIC)
-        img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+        # img = cv.imread(f"{i_path}")
+        # img = cv.resize(img, (int(frame1_entry_size_w.get()),int(frame1_entry_size_h.get())), interpolation=cv.INTER_AREA)
+        # img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
+        img = Image.open(frame1_sample_entry.get())
+        img = img.resize((int(frame1_entry_size_w.get()),int(frame1_entry_size_h.get())), resample=Image.Resampling.NEAREST)
+        img = np.array(img)
+        img_h = img.shape[0]
+        img_w = img.shape[1]
         curr_img_n +=1
         curr_img.set(value=curr_img_n)
         popup.update()
         cf_filter()
     iterating = 0
-    load_sample()
     for child in frame2.winfo_children():
         child["state"] = 'disable'
     for child in frame3.winfo_children():
@@ -260,6 +268,7 @@ def iterate():
         child["state"] = 'disable'
     curr_img_n = 0
     curr_img.set(value=curr_img_n)
+    load_sample()
 
 def iterate_2(i_img):
         final = (f"{out_path}\\rf_{temp_img_name}")
@@ -313,9 +322,9 @@ frame1_entry_size_w['state'] = 'disable'
 
 def cf_image(img):
     im = Image.fromarray(img)
-    imTk = ImageTk.PhotoImage(image=im)
-    cf_blank.configure(image=imTk)
-    cf_blank.image = imTk
+    im = ImageTk.PhotoImage(image=im)
+    cf_blank.configure(image=im)
+    cf_blank.image = im
     cf_blank.grid(column=1,row=1,padx=(0,10),pady=10,columnspan=3)
 
 def cf_filter():
@@ -323,6 +332,8 @@ def cf_filter():
     cf_lo=np.array([color_low[0][0],color_low[0][1],color_low[0][2]])
     cf_hi=np.array([color_hi[0][0],color_hi[0][1],color_hi[0][2]])
     cf=cv.inRange(img,cf_lo,cf_hi)
+    # cv.imshow('a', cf)
+    # cv.waitKey(0)
     current_img(cf)
     cf_image(cf)
     enable(frame3.winfo_children())
@@ -397,9 +408,9 @@ for child in frame2.winfo_children():
 
 def err_dil_img(img):
     im = Image.fromarray(img)
-    imTk = ImageTk.PhotoImage(image=im)
-    err_dil_blank.configure(image=imTk)
-    err_dil_blank.image = imTk
+    im = ImageTk.PhotoImage(image=im)
+    err_dil_blank.configure(image=im)
+    err_dil_blank.image = im
     err_dil_blank.grid(column=1,row=4,padx=30,pady=10)
 
 def err_dil_updateValue(event):
@@ -445,6 +456,8 @@ frame3_var4 = tk.IntVar()
 frame3_label_grey = ttk.Label(frame3, text="Erroded/Dilated Mask", font='bold')
 frame3_label_grey.grid(column=1,row=5)
 err_dil_blank = ttk.Label(frame3, background='black')
+frame3_label_tip = ttk.Label(frame3, text="Press enter to input values", wraplength=100)
+frame3_label_tip.grid(column=2,row=4)
 
 '''Entry'''
 frame3_entry_erroded = ttk.Entry(frame3, width=5, justify="center", textvariable=frame3_var3)
@@ -481,16 +494,24 @@ for child in frame3.winfo_children():
 
 def filarea_img(img):
     im = Image.fromarray(img)
-    imTk = ImageTk.PhotoImage(image=im)
-    filarea_blank.configure(image=imTk)
-    filarea_blank.image = imTk
+    im = ImageTk.PhotoImage(image=im)
+    filarea_blank.configure(image=im)
+    filarea_blank.image = im
     filarea_blank.grid(column=0,row=0,padx=60,pady=10,columnspan=4)
 
 def filarea_updateValue(event):
     global filarea
-    labels = measure.label(dilated, connectivity=1, background=0)
+    labels = measure.label(dilated, connectivity=2, background=0)
     mask = np.zeros(dilated.shape, dtype="uint8")
     filarea = dilated
+    mask_num = 0
+    sumPixels = 0
+    maxPixels = frame4_var2.get()
+    try:
+        if iterating:
+            maxPixels = maxPixels * (((img_h/150)*(img_w)/150))
+    except:
+        pass
     if frame4_var1.get() == 1:
         for label in np.unique(labels):
             if label == 0:
@@ -498,7 +519,9 @@ def filarea_updateValue(event):
             labelMask = np.zeros(mask.shape, dtype="uint8")
             labelMask[labels == label] = 255
             numPixels = cv.countNonZero(labelMask)
-            if numPixels < frame4_var2.get():
+            if numPixels < maxPixels:
+                mask_num += 1
+                sumPixels = sumPixels + numPixels
                 mask = cv.add(mask, labelMask)
         filarea = mask
     if frame4_var1.get() == 2:
@@ -508,9 +531,14 @@ def filarea_updateValue(event):
             labelMask = np.zeros(mask.shape, dtype="uint8")
             labelMask[labels == label] = 255
             numPixels = cv.countNonZero(labelMask)
-            if numPixels > frame4_var2.get():
+            if numPixels > maxPixels:
+                mask_num += 1
+                sumPixels = sumPixels + numPixels
                 mask = cv.add(mask, labelMask)
         filarea = mask
+    # print('maxp ', maxPixels)
+    # print('mask ', mask_num)
+    # print('sump ', sumPixels)
     filarea_img(filarea)
     current_img(filarea)
     inpaint_updateValue('<Return>', img)
@@ -579,9 +607,9 @@ def inpaint_img(img):
         im = Image.fromarray(img)
     except:
         im = Image.fromarray((img * 255).astype(np.uint8))
-    imTk = ImageTk.PhotoImage(image=im)
-    inpaint_blank.configure(image=imTk)
-    inpaint_blank.image = imTk
+    im = ImageTk.PhotoImage(image=im)
+    inpaint_blank.configure(image=im)
+    inpaint_blank.image = im
     inpaint_blank.grid(column=0,row=0,columnspan=3,padx=(0,10))
         
 
