@@ -186,7 +186,6 @@ frame1_entry = ttk.Entry(frame1, width=25)
 frame1_entry.grid(column=1,row=0,pady=10)
 frame1_sample_entry = ttk.Entry(frame1, width=25)
 frame1_sample_entry.grid(column=1,row=1)
-frame1_sample_entry.insert(tk.END, "H:/Document/VS Code/RF_UI/DSC09581.JPG")
 
 '''Frame1_2'''
 
