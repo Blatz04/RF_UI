@@ -126,9 +126,7 @@ def load_sample():
     n_img = 0
     for i in (i for i in os.listdir(frame1_entry.get()) if i.endswith(formats)):
         n_img +=1
-    # sample_img = cv.imread(frame1_sample_entry.get())
     sample_img = Image.open(frame1_sample_entry.get())
-    # img = cv.resize(sample_img, canvas, interpolation=cv.INTER_AREA)
     img = sample_img.resize(canvas, resample=Image.Resampling.NEAREST)
     sample_img = np.array(sample_img)
     img = np.array(img)
@@ -245,9 +243,6 @@ def iterate():
         temp_img_name = img_name
         iterating = 1
         i_path = (frame1_entry.get() + '\\' + img_name)
-        # img = cv.imread(f"{i_path}")
-        # img = cv.resize(img, (int(frame1_entry_size_w.get()),int(frame1_entry_size_h.get())), interpolation=cv.INTER_AREA)
-        # img = cv.cvtColor(img, cv.COLOR_BGR2RGB)
         img = Image.open(frame1_sample_entry.get())
         img = img.resize((int(frame1_entry_size_w.get()),int(frame1_entry_size_h.get())), resample=Image.Resampling.NEAREST)
         img = np.array(img)
@@ -332,8 +327,6 @@ def cf_filter():
     cf_lo=np.array([color_low[0][0],color_low[0][1],color_low[0][2]])
     cf_hi=np.array([color_hi[0][0],color_hi[0][1],color_hi[0][2]])
     cf=cv.inRange(img,cf_lo,cf_hi)
-    # cv.imshow('a', cf)
-    # cv.waitKey(0)
     current_img(cf)
     cf_image(cf)
     enable(frame3.winfo_children())
@@ -536,9 +529,6 @@ def filarea_updateValue(event):
                 sumPixels = sumPixels + numPixels
                 mask = cv.add(mask, labelMask)
         filarea = mask
-    # print('maxp ', maxPixels)
-    # print('mask ', mask_num)
-    # print('sump ', sumPixels)
     filarea_img(filarea)
     current_img(filarea)
     inpaint_updateValue('<Return>', img)
