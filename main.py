@@ -242,7 +242,7 @@ def iterate():
         temp_img_name = img_name
         iterating = 1
         i_path = (frame1_entry.get() + '\\' + img_name)
-        img = Image.open(frame1_sample_entry.get())
+        img = Image.open(i_path)
         img = img.resize((int(frame1_entry_size_w.get()),int(frame1_entry_size_h.get())), resample=Image.Resampling.NEAREST)
         img = np.array(img)
         img_h = img.shape[0]
