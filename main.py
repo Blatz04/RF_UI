@@ -434,6 +434,11 @@ def err_dil_updateValue(event):
     global dilated
     n = frame3_var3.get()
     m = frame3_var4.get()
+    try:
+        if iterating:
+           m += 1
+    except:
+        pass
     erroded = cv.erode(cf, None, iterations=n)
     dilated = cv.dilate(erroded, None, iterations=m)
     err_dil_img(dilated)
