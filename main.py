@@ -4,10 +4,21 @@ import os
 import numpy as np
 import gc
 import time
+import xlsxwriter
 from tkinter import filedialog, colorchooser, ttk
 from PIL import Image, ImageTk
 from skimage import measure
 from skimage.restoration import inpaint
+
+def save_data(data):
+
+    workbook = xlsxwriter.Workbook("numPixels.xlsx")
+    worksheet = workbook.add_worksheet()
+
+    for i, j in enumerate(data):
+        worksheet.write(i, 0, j)
+
+    workbook.close()
 
 def enable(childList):
     for child in childList:
@@ -246,8 +257,10 @@ Inpaint Method: {f"NS, with value of {inp_val}" if inp_ == 1 else f"Telea, with 
 
 def iterate():
     gc.collect()
+    global save_array
+    save_array = []
     for img_name in (img_name for img_name in os.listdir(frame1_entry.get()) if img_name.endswith(formats)):
-        time.sleep(2)
+        time.sleep(1)
         if cancel_var.get() == 1:
             cancel_var.set(value=0)
             break
@@ -264,6 +277,7 @@ def iterate():
         curr_img.set(value=curr_img_n)
         popup.update()
         cf_filter()
+    save_data(save_array)
     iterating = 0
     for child in frame2.winfo_children():
         child["state"] = 'disable'
@@ -558,6 +572,11 @@ def filarea_updateValue(event):
                 sumPixels = sumPixels + numPixels
                 mask = cv.add(mask, labelMask)
         filarea = mask
+    try:
+        if iterating:
+            save_array.append(sumPixels)
+    except:
+        pass
     filarea_img(filarea)
     current_img(filarea)
     inpaint_updateValue('<Return>', img)
