@@ -3,6 +3,7 @@ import tkinter as tk
 import os
 import numpy as np
 import gc
+import time
 from tkinter import filedialog, colorchooser, ttk
 from PIL import Image, ImageTk
 from skimage import measure
@@ -27,6 +28,15 @@ def toggle_theme():
     else:
         ref_ui.tk.call("set_theme", "dark")    
         
+def toggle_connectivity():
+    frame4_check['text'] = f"Connectivity: {frame4_check_var.get()}"
+
+def toggle_split():
+    if frame5_check_var.get():
+        frame5_check['text'] = f"Biharmonic, Split Into Region: True\n(Slow, Low Memory)"
+    else:
+        frame5_check['text'] = f"Biharmonic, Split Into Region: False\n(Fast, High Memory)"
+        
 def disableChildren(parent):
     for child in parent.winfo_children():
         wtype = child.winfo_class()
@@ -42,13 +52,14 @@ def enableChildren(parent):
             child.configure(state='normal')
         else:
             enableChildren(child)
+            
 '''UI Settings'''
 
 ref_ui = tk.Tk()
 
 ref_ui.title("Reflective Filter")
 ref_ui.iconbitmap("C_dim.ico")
-ref_ui.geometry("1195x640")
+ref_ui.geometry("1195x680")
 ref_ui.update()
 ui_h = ref_ui.winfo_height()
 ref_ui.resizable(width=False, height=False)
@@ -235,6 +246,7 @@ Inpaint Method: {f"NS, with value of {inp_val}" if inp_ == 1 else f"Telea, with 
 def iterate():
     gc.collect()
     for img_name in (img_name for img_name in os.listdir(frame1_entry.get()) if img_name.endswith(formats)):
+        time.sleep(2)
         if cancel_var.get() == 1:
             cancel_var.set(value=0)
             break
@@ -305,7 +317,7 @@ frame1_entry_size_w.grid(column=0,row=8)
 '''Checkbuttons'''
 var = tk.IntVar(value=0)
 theme = ttk.Checkbutton(frame1, text="Theme", variable=var, offvalue=0, onvalue=1, command=toggle_theme, style='Switch.TCheckbutton')
-theme.grid(column=0,row=10,pady=10,sticky='w')
+theme.grid(column=0,row=10,pady=50,sticky='w')
 
 current_blank['state'] = 'disable'
 frame1_check_iterate['state'] = 'disable'
@@ -493,7 +505,7 @@ def filarea_img(img):
 
 def filarea_updateValue(event):
     global filarea
-    labels = measure.label(dilated, connectivity=2, background=0)
+    labels = measure.label(dilated, connectivity=(frame4_check_var.get() + 1), background=0)
     mask = np.zeros(dilated.shape, dtype="uint8")
     filarea = dilated
     mask_num = 0
@@ -573,18 +585,23 @@ def frame4_callback(event):
 '''Entry'''
 frame4_entry = ttk.Entry(frame4, width=5, justify="center", textvariable=frame4_var2)
 frame4_entry.bind('<Return>', frame4_callback)
-frame4_entry.grid(column=3,row=3, sticky='e')
+frame4_entry.grid(column=3,row=4, sticky='e')
 
 '''Scales'''
 frame4_scale_filarea = ttk.Scale(frame4, from_=0, to_=500, variable=frame4_var2, length=175, orient="horizontal")
-frame4_scale_filarea.grid(column=0,row=3,columnspan=3)
+frame4_scale_filarea.grid(column=0,row=4,columnspan=3)
 frame4_scale_filarea['state'] = 'disable'
 
 '''Radiobuttons'''
 frame4_radio_large = ttk.Radiobutton(frame4, text="Remove Large", variable=frame4_var1, value=1, command=frame4_checked)
-frame4_radio_large.grid(column=0,row=2)
+frame4_radio_large.grid(column=0,row=3)
 frame4_radio_small = ttk.Radiobutton(frame4, text="Remove Small", variable=frame4_var1, value=2, command=frame4_checked)
-frame4_radio_small.grid(column=2,row=2, columnspan=2, sticky='e')
+frame4_radio_small.grid(column=2,row=3, columnspan=2, sticky='e')
+
+'''Checkbuttons'''
+frame4_check_var = tk.IntVar(value=0)
+frame4_check = ttk.Checkbutton(frame4, text='Connectivity: 0', variable=frame4_check_var, offvalue=0, onvalue=1, command=toggle_connectivity, style='Switch.TCheckbutton')
+frame4_check.grid(column=0,row=2,sticky='n',columnspan=4)
 
 for child in frame4.winfo_children():
     child["state"] = 'disable'
@@ -611,7 +628,7 @@ def inpaint_updateValue(event, ori=None):
     if frame5_var1.get() == 2:
         inpainted = cv.inpaint(img, filarea, frame5_var2.get(), cv.INPAINT_TELEA)
     if frame5_var1.get() == 3:
-        inpainted = inpaint.inpaint_biharmonic(img, filarea, split_into_regions=True, channel_axis=-1)
+        inpainted = inpaint.inpaint_biharmonic(img, filarea, split_into_regions=frame5_check_var.get(), channel_axis=-1)
     try:
         inpaint_img(inpainted)
         current_img(inpainted)
@@ -663,30 +680,34 @@ frame5_label_grey.grid(column=0,row=1,columnspan=3)
 inpaint_blank = ttk.Label(frame5, background='black')
 frame5_label_info = ttk.Label(frame5, text=
 '''NOTE!
-Biharmonic consumes A LOT of memory and slow, a single image more than 700x700 pixels may consume more than 4GB of RAM!
-As for others, larger value, larger time to process.''', wraplength=200, justify='center')
-frame5_label_info.grid(column=0,row=4,columnspan=3)
+Depending on your set up, Biharmonic may be slower and consume a lot of memory. In all method, the larger the image, the larger the resource it need!''', wraplength=275, justify='center')
+frame5_label_info.grid(column=0,row=5,columnspan=3)
 
 def frame5_callback(event):
     inpaint_updateValue(None)
 
 '''Scales'''
 frame5_scale_inpaint = ttk.Scale(frame5, from_=0, to_=100, variable=frame5_var2, length=175, orient="horizontal")
-frame5_scale_inpaint.grid(column=0,row=3,columnspan=2,padx=5)
+frame5_scale_inpaint.grid(column=0,row=4,columnspan=2,padx=5)
 frame5_scale_inpaint['state'] = 'disable'
         
 '''Entry'''
 frame5_entry = ttk.Entry(frame5, width=5, justify="center", textvariable=frame5_var2)
 frame5_entry.bind('<Return>', frame5_callback)
-frame5_entry.grid(column=2,row=3,sticky='e',padx=(0,11))
+frame5_entry.grid(column=2,row=4,sticky='e',padx=(0,11))
 
 '''Radiobuttons'''
 frame5_radio_ns = ttk.Radiobutton(frame5, text="NS", variable=frame5_var1, value=1, command=frame5_checked)
-frame5_radio_ns.grid(column=0,row=2)
+frame5_radio_ns.grid(column=0,row=3)
 frame5_radio_telea = ttk.Radiobutton(frame5, text="Telea", variable=frame5_var1, value=2, command=frame5_checked)
-frame5_radio_telea.grid(column=1,row=2)
+frame5_radio_telea.grid(column=1,row=3)
 frame5_radio_biharmonic = ttk.Radiobutton(frame5, text="Biharmonic", variable=frame5_var1, value=3, command=frame5_checked)
-frame5_radio_biharmonic.grid(column=2,row=2)
+frame5_radio_biharmonic.grid(column=2,row=3)
+
+'''Checkbuttons'''
+frame5_check_var = tk.BooleanVar(value=True)
+frame5_check = ttk.Checkbutton(frame5, text='Biharmonic, Split Into Regions: True\n(Slow, Low Memory)', variable=frame5_check_var, offvalue=False, onvalue=True, command=toggle_split, style='Switch.TCheckbutton')
+frame5_check.grid(column=0,row=2,sticky='n',columnspan=4)
 
 for child in frame5.winfo_children():
     child["state"] = 'disable'
