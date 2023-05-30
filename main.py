@@ -157,6 +157,7 @@ def load_sample():
     frame1_entry_size_h.insert(tk.END, f"{sample_img.shape[0]}")
     frame1_entry_size_w.insert(tk.END, f"{sample_img.shape[1]}")
     frame1_var1.set(value=f'Images: {n_img}')
+    frame1_entry_size_h['state'] = 'readonly'
 
 def color_pick():
     color = colorchooser.askcolor(title="Pick Color")
@@ -255,7 +256,7 @@ def iterate():
         iterating = 1
         i_path = (frame1_entry.get() + '\\' + img_name)
         img = Image.open(i_path)
-        img = img.resize((int(frame1_entry_size_w.get()),int(frame1_entry_size_h.get())), resample=Image.Resampling.NEAREST)
+        img = img.resize((int(frame1_entry_size_w.get()),int(frame1_entry_size_h.get())), resample=Image.Resampling.LANCZOS)
         img = np.array(img)
         img_h = img.shape[0]
         img_w = img.shape[1]
@@ -294,7 +295,8 @@ frame1_var1 = tk.StringVar(value='Images: ~')
 frame1_label_grey = ttk.Label(frame1, text="Current Result", font='bold')
 frame1_label_grey.grid(column=1,row=6)
 current_blank = ttk.Label(frame1, background='black')
-frame1_label_size = ttk.Label(frame1, text="Output Dimensions", font='bold')
+frame1_label_size = ttk.Label(frame1, text='''Output Rescale
+Based on Width''', font='bold')
 frame1_label_size.grid(column=0,row=6,pady=10)
 frame1_label_size_h = ttk.Label(frame1, text="H", font='bold')
 frame1_label_size_h.grid(column=1,row=7,sticky='w')
@@ -309,15 +311,26 @@ frame1_label_info.grid(column=3,row=5,columnspan=5)
 'Buttons'
 frame1_check_iterate = ttk.Button(frame1, text="Start Iterate All", compound='center', command=check_iterate)
 frame1_check_iterate.grid(column=0,row=5)
+
+def frame1_callback(event):
+    basewidth = int(frame1_entry_size_w.get())
+    wpercent = (basewidth/float(sample_img.shape[1]))
+    hsize = int((float(sample_img.shape[0])*float(wpercent)))
+    frame1_entry_size_h['state'] = 'normal'
+    frame1_entry_size_h.delete(0, tk.END)
+    frame1_entry_size_h.insert(tk.END, hsize)
+    frame1_entry_size_h['state'] = 'readonly'
+    
 frame1_entry_size_h = ttk.Entry(frame1, width=10)
 frame1_entry_size_h.grid(column=0,row=7)
 frame1_entry_size_w = ttk.Entry(frame1, width=10)
 frame1_entry_size_w.grid(column=0,row=8)
+frame1_entry_size_w.bind('<Return>', frame1_callback)
 
 '''Checkbuttons'''
 var = tk.IntVar(value=0)
 theme = ttk.Checkbutton(frame1, text="Theme", variable=var, offvalue=0, onvalue=1, command=toggle_theme, style='Switch.TCheckbutton')
-theme.grid(column=0,row=10,pady=50,sticky='w')
+theme.grid(column=0,row=10,pady=30,sticky='w')
 
 current_blank['state'] = 'disable'
 frame1_check_iterate['state'] = 'disable'
