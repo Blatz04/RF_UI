@@ -11,6 +11,7 @@ def hsl_to_rgb(hsl_value):
 def get_palette(pil_img, palette_size=2):
     # Copy the Image
     img = pil_img.copy()
+    
     # Resize image to speed up processing
     img = img.resize((img.size[0]//4,img.size[1]//4), resample=Image.Resampling.NEAREST)
 

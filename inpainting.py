@@ -1,6 +1,8 @@
 import cv2 as cv
 import numpy as np
-from scipy.ndimage import grey_dilation
+from PIL import Image
+from scipy.ndimage import grey_dilation, gaussian_filter, convolve
+from skimage import restoration
 
 # img = Image.open("DSC06342.JPG")
 # mask = Image.open("tes.JPG")
@@ -8,21 +10,21 @@ from scipy.ndimage import grey_dilation
 # img = img.resize((img.size[0]//2,img.size[1]//2), resample=Image.Resampling.LANCZOS)
 # mask = np.array(mask).astype(np.float32)
 
-def do_inpaint(img, mask, radius=1, n=3, m=3):
+def do_inpaint(img, mask, radius, m, n):
     #mask = mask.resize((mask.size[0]//6,mask.size[1]//6), resample=Image.Resampling.NEAREST)
 
-    # # Apply convolution with the blur kernel
-    # smoothed_mask = mask #convolve(mask, )
+    dilated_mask = grey_dilation(mask, size=(m, n))  # Adjust the size as needed
+    #dilated_mask_2 = grey_dilation(mask, size=(1, 1))  # Adjust the size as needed
+    
+    #x = gaussian_filter(mask, sigma=0.5)
+    
+    # Apply convolution with the blur kernel
+    #smoothed_mask = convolve(mask, x)
 
-    dilated_mask = grey_dilation(mask, size=(n, m))  # Adjust the size as needed
-    #dilated_mask_2 = grey_dilation(mask, size=(2, 2))  # Adjust the size as needed
-    # #blurred_mask = gaussian_filter(mask, sigma=100.0)
-    # smoothed_mask_img = Image.fromarray(smoothed_mask)
-    # smoothed_mask_img.show()
-
-    # img.show()
-    # Image.fromarray(mask).show()
-    # Image.fromarray(dilated_mask).show()
+    #img.show()
+    #Image.fromarray(mask).show()
+    #Image.fromarray(x).show()
+    #Image.fromarray(dilated_mask).show()
 
     img = np.array(img).astype(np.float32)
     #inpainted = inpaint.inpaint_biharmonic(img, dilated_mask, split_into_regions=False, channel_axis=-1)
@@ -37,7 +39,7 @@ def do_inpaint(img, mask, radius=1, n=3, m=3):
     img_bgr = img_bgr.astype(np.uint8)
     mask_gray = mask_gray.astype(np.uint8)
     
-    #inpainted = inpaint.inpaint_biharmonic(img, dilated_mask_2, split_into_regions=False, channel_axis=-1)
+    # inpainted = restoration.inpaint.inpaint_biharmonic(img, dilated_mask_2, split_into_regions=True, channel_axis=-1)
     
     # Apply patch-based inpainting
     inpainted_2 = cv.inpaint(img_bgr, mask_gray, radius, cv.INPAINT_TELEA)
@@ -46,4 +48,5 @@ def do_inpaint(img, mask, radius=1, n=3, m=3):
     # Convert inpainted array to PIL Image
     #Image.fromarray(np.uint8(inpainted)).show()
     #Image.fromarray(inpainted_2_rgb).show()
+    # return(inpainted)
     return(inpainted_2_rgb)
