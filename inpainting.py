@@ -1,8 +1,6 @@
 import cv2 as cv
 import numpy as np
-from PIL import Image
-from scipy.ndimage import grey_dilation, gaussian_filter, convolve
-from skimage import restoration
+from scipy.ndimage import grey_dilation
 
 def do_inpaint(img, mask, radius, m, n):
 
