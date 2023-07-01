@@ -8,9 +8,6 @@ from PIL import Image
 def process_one(img, save_img_path, save_bg_path, curr_img, arg):
     print(f"Currently processing: {curr_img}")
     converted = convert(img, save_bg_path, True, arg)
-    #print(save_img_path)
-    #print(arg)
-    #Image.fromarray(np.uint8(converted)).show()
     Image.fromarray(converted).save(save_img_path)
 
 def get_half_cpu():
@@ -37,9 +34,9 @@ def iterating(img_list, bg_img_filenames, ori_path, out_path, arg):
             save_img_path = save_img_path.replace("\\", "/")
             img = Image.open(img_path)
             img = img.resize((img.size[0]//arg.w_div,img.size[1]//arg.h_div), resample=Image.Resampling.LANCZOS)
-            #img = img.resize((img.size[0]//4,img.size[1]//4), resample=Image.Resampling.LANCZOS)
             future = executor.submit(process_one, img, save_img_path, save_bg_path, img_list[i], arg)
             futures.append(future)
+            
         # Wait for all tasks to complete and retrieve results
         for future in concurrent.futures.as_completed(futures):
             result = future.result()

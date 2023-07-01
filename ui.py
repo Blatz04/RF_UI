@@ -66,32 +66,12 @@ def run():
             # or handle the error in a different way
             return False
     
-    # def enable(childList):
-    #     for child in childList:
-    #         child['state'] = 'normal'
-
     def toggle_theme():
         if var.get():
             ref_ui.tk.call("set_theme", "light")
         else:
             ref_ui.tk.call("set_theme", "dark")    
 
-    # def disableChildren(parent):
-    #     for child in parent.winfo_children():
-    #         wtype = child.winfo_class()
-    #         if wtype not in ('Frame','Labelframe','TFrame','TLabelframe', 'TToplevel'):
-    #             child.configure(state='disable')
-    #         else:
-    #             disableChildren(child)
-
-    # def enableChildren(parent):
-    #     for child in parent.winfo_children():
-    #         wtype = child.winfo_class()
-    #         if wtype not in ('Frame','Labelframe','TFrame','TLabelframe'):
-    #             child.configure(state='normal')
-    #         else:
-    #             enableChildren(child)
-                
     '''UI Settings'''
 
     ref_ui = tk.Tk()
@@ -100,7 +80,6 @@ def run():
     ref_ui.iconbitmap("C_dim.ico")
     ref_ui.geometry(f"{int(Width * 0.4)}x{int(Height * 0.35)}")
     ref_ui.update()
-    # ui_h = ref_ui.winfo_height()
     ref_ui.resizable(width=False, height=False)
 
     ref_ui.tk.call("source", "Azure-ttk-theme-main/azure.tcl")
@@ -113,23 +92,6 @@ def run():
     '''Frame2'''
     frame2 = ttk.Frame(ref_ui)
     frame2.pack(anchor='center', side='bottom', pady=5)
-
-    # curr_img_n = 0
-    # curr_img = tk.IntVar(value=curr_img_n)
-    # cancel_var = tk.BooleanVar(value=0)
-
-    # def cancel_updateValue():
-    #     cancel_var.set(value=1)
-
-    # popup = tk.Toplevel(ref_ui)
-    # popup.title("~")
-    # popup.geometry("150x60")
-    # popup.iconbitmap("C_dim.ico")
-    # progress_bar = ttk.Progressbar(popup, variable=curr_img)
-    # progress_bar.pack(pady=5)
-    # cancel_button = ttk.Button(popup, text="Stop", command=cancel_updateValue)
-    # cancel_button.pack()
-    # popup.withdraw()
 
     '''Frame1'''
 
@@ -171,13 +133,12 @@ def run():
             frame1_var1.set(value=f'Images: {n_img}')
             random_img = Image.open(frame1_random_entry.get())
             random_img = random_img.copy()
-            #random_img = random_img.resize((random_img.size[0]//6,random_img.size[1]//6), rerandom=Image.Resampling.NEAREST)
+
             # Split the full path into directory and filename
             image_directory, image_filename = os.path.split(frame1_random_entry.get())
             # Split the filename into name and extension
             image_name, image_extension = os.path.splitext(image_filename)
-            #bg_filename = f"{image_name}_extra{image_extension}"
-            #print(bg_filename)
+
             frame1_entry_size_w['state'] = 'normal'
             frame1_entry_size_h['state'] = 'normal'
             frame1_entry_size_w.delete(0, tk.END)
@@ -201,7 +162,7 @@ def run():
                     image_name, image_extension = os.path.splitext(filename)
                     bg_filename = f"{image_name}_bg_mask{image_extension}"
                     bg_img_filenames.append(bg_filename)
-        #print(img_list, bg_img_filenames)
+
         out_path = os.path.dirname(frame1_random_entry.get()) + '/rf_' + os.path.basename(frame1_entry.get())
         yes_no =  tk.messagebox.askokcancel(title="Start Iterating Process?", message=f'''This will start to process every image in the folder, with the output path "{out_path}" (will create a directory if didn't exist).
     Number of images: {len(img_list)} with Image Masks: {len(bg_img_filenames)}''')
