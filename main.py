@@ -1,14 +1,36 @@
 import os
 import ui
+import sys
+#import time
 import numpy as np
 import concurrent.futures
 from masking import convert
 from PIL import Image
+from rembg import new_session
 
 def process_one(img, save_img_path, save_bg_path, curr_img, arg):
-    print(f"Currently processing: {curr_img}")
-    converted = convert(img, save_bg_path, True, arg)
-    Image.fromarray(converted).save(save_img_path)
+    # Start the timer
+    #start_time = time.time()
+    converted = img
+    for i in range(arg.repeats):
+        if i == 0:
+            print(f"Currently processing: {curr_img} Repeat:{i}")
+            converted = convert(converted, save_bg_path, True, i, arg)
+        else:
+            print(f"Currently processing: {curr_img} Repeat:{i}")
+            converted = convert(Image.fromarray(converted), save_bg_path, True, i, arg)
+    # Image.fromarray(converted).show()
+    if arg.save_as_png:
+        save_img_path = save_img_path.replace(".jpg", ".png")
+        Image.fromarray(converted).save(save_img_path, "PNG")
+    else:
+        Image.fromarray(converted).save(save_img_path, "JPEG", quality=100)
+    print(f"{curr_img} - Finished")
+    # Calculate the elapsed time
+    #elapsed_time = time.time() - start_time
+
+    # Print the elapsed time
+    #print(f"Elapsed time: {elapsed_time} seconds")
 
 def get_half_cpu():
     half_thread = int(os.cpu_count()/4)
@@ -43,4 +65,7 @@ def iterating(img_list, bg_img_filenames, ori_path, out_path, arg):
     print("Done!")
 
 if __name__ == "__main__":
+    model_path = os.path.join("H:\Document\VS Code\RF_UI", "model")
+    #model_path = os.path.join(sys._MEIPASS, "model")
+    os.environ["U2NET_HOME"] = model_path
     ui.run()

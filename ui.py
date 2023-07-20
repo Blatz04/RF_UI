@@ -32,6 +32,36 @@ def run():
             raise argparse.ArgumentTypeError("Must be a non-negative integer (>= 0)")
         return value
     
+    def restricted_int(x):
+        x = int(x)
+        if x <= 0:
+            raise argparse.ArgumentTypeError("The palette_num value must be a positive integer.")
+        if x > 128:
+            raise argparse.ArgumentTypeError("The palette_num value is too high. Please choose a value between 1 and 128.")
+        return x
+
+    def restricted_float(x):
+        x = float(x)
+        if x < 0 or x > 1:
+            raise argparse.ArgumentTypeError(f"{x} is not a valid value. The reduction factor must be between 0 and 1.")
+        return x
+            
+    def restricted_float_with_negative(x):
+        x = float(x)
+        if x < -1 or x > 1:
+            raise argparse.ArgumentTypeError(f"{x} is not a valid value. The reduction factor must be between -1 and 1.")
+        return x
+
+    def range_type(value):
+        if value == "235-255":
+            return 235, 255
+        try:
+            range_min, range_max = map(float, value.split('-'))
+            return range_min, range_max
+        except ValueError:
+            raise argparse.ArgumentTypeError("Invalid range value. Expected format: min-max")
+
+
     def update_arg():
         global arg
         input_string = frame2_entry.get()
@@ -43,17 +73,24 @@ def run():
         parser = argparse.ArgumentParser()
         
         # Add the arguments that correspond to the attributes of the arg object
-        parser.add_argument('-a', '--w_div', type=positive_integer_type, default=1, help='value for the image width to be divided with')
-        parser.add_argument('-b', '--h_div', type=positive_integer_type, default=1, help='value for the image height to be divided with')
-        parser.add_argument('-c', '--connectivity', type=connectivity_type, default=2, help='Connectivity, set to 1 or 2')
-        parser.add_argument('-p', '--min_pix', type=non_negative_integer_type, default=5, help='filter small pixels')
-        parser.add_argument('-x', '--palette_num', type=positive_integer_type, default=2, help='how many palette to create')
-        parser.add_argument('-g', '--grey_lim', type=non_negative_integer_type, default=50, help='filter gray pixels from rembg mask')
-        parser.add_argument('-y', '--light_mid', type=positive_integer_type, default=3, help='mid range for light pixels')
-        parser.add_argument('-z', '--light_max', type=positive_integer_type, default=7, help='max range for light pixels')
-        parser.add_argument('-r', '--inpaint_rad', type=non_negative_integer_type, default=1, help='inpaint radius')
-        parser.add_argument('-m', '--dil_m', type=non_negative_integer_type, default=0, help='dilate masks, value of m (mxn)')
-        parser.add_argument('-n', '--dil_n', type=non_negative_integer_type, default=0, help='dilate masks, value of n (mxn)')
+        parser.add_argument('-wd', '--w_div', type=positive_integer_type, default=1, help='value for the image width to be divided with')
+        parser.add_argument('-hd', '--h_div', type=positive_integer_type, default=1, help='value for the image height to be divided with')
+        parser.add_argument('-c', '--connectivity', type=connectivity_type, default=2, help='Connectivity for filtering small areas, set to 1 or 2')
+        parser.add_argument('-p', '--min_pix', type=non_negative_integer_type, default=5, help='filter small areas')
+        parser.add_argument('-cn', '--colors_num', type=restricted_int, default=64, help='before creating palette, image number of colors will be reduced to this amount')
+        parser.add_argument('-pn', '--palette_num', type=restricted_int, default=16, help='how many top most palette to use')
+        parser.add_argument('-a', '--alpha_range', type=range_type, default="235-255", help='filter range of alpha channel from rembg mask, 0 is background')
+        parser.add_argument('-lm', '--l_mid_offset', type=restricted_float_with_negative, default=0, help='mid range for light pixels value offset, you can use negative')
+        parser.add_argument('-lx', '--l_max_offset', type=restricted_float_with_negative, default=0, help='max range for light pixels value offset, you can use negative')
+        parser.add_argument('-f', '--reduction_factor', type=restricted_float, default=0.05, help='lightness level reduction factor, under 0.1 should be sufficient')
+        parser.add_argument('-w', '--contour_width', type=non_negative_integer_type, default=1, help='width used to smoothen the border of edited and unedited areas')
+        parser.add_argument('-mc', '--mask_confidence', type=restricted_float, default=0, help='masks confidence of reflective areas')
+        parser.add_argument('-frr', '--fast_reflection', type=restricted_float, default=0.01, help='control Fast Reflection Remover H value, higher value will remove more reflection, adviced to set under 0.1')
+        parser.add_argument('-re', '--repeats', type=positive_integer_type, default=2, help='number of repeats filtering each image')
+        parser.add_argument('-m', '--show_final_mask', action='store_true', help='show final mask')
+        parser.add_argument('-sc', '--skip_contour', action='store_true', help='skip contour inpainting')
+        parser.add_argument('-fb', '--show_filtered_bg_mask', action='store_true', help='show filtered background mask, too see if the object is correct')
+        parser.add_argument('-png', '--save_as_png', action='store_true', help='save final image in PNG format')
 
         try:
             # Parse the input arguments
